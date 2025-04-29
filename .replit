@@ -13,28 +13,20 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "PythonCalculator"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "calculator-app"
+args = "MediQA"
 
 [[workflows.workflow]]
-name = "PythonCalculator"
+name = "MediQA"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python calculator.py"
+args = "python main.py"
 waitForPort = 5000
 
-[[workflows.workflow]]
-name = "calculator-app"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python calculator.py"
-
 [deployment]
-run = ["sh", "-c", "python calculator.py"]
+run = ["sh", "-c", "python main.py"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
