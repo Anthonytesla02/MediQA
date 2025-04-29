@@ -2,7 +2,7 @@ services:
   - type: web
     name: mediqa
     env: python
-    buildCommand: pip install -r package_requirements.txt
+    buildCommand: pip install -r deployment_requirements.txt
     startCommand: gunicorn main:app
     envVars:
       - key: PYTHON_VERSION
@@ -13,6 +13,8 @@ services:
         fromDatabase:
           name: mediqa_db
           property: connectionString
+      - key: MISTRAL_API_KEY
+        sync: false
 
 databases:
   - name: mediqa_db
