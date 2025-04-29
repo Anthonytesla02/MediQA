@@ -3,6 +3,7 @@ import os
 import logging
 import threading
 from pathlib import Path
+from config import DATABASE_URL
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -28,8 +29,8 @@ def auto_initialize():
     logger.info("Starting database initialization...")
     
     # Check if we have a PostgreSQL database
-    if not os.environ.get('DATABASE_URL'):
-        logger.error("PostgreSQL database not found. Please ensure DATABASE_URL is set.")
+    if not DATABASE_URL:
+        logger.error("PostgreSQL database not found. Please ensure DATABASE_URL is configured.")
         return False
     else:
         logger.info("PostgreSQL database found")

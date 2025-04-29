@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
+from config import DATABASE_URL, SESSION_SECRET
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,12 +19,12 @@ db = SQLAlchemy(model_class=Base)
 
 # Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "mediqa_dev_secret_key_2025")
+app.secret_key = SESSION_SECRET
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the database
 # Handle potential "postgres://" to "postgresql://" conversion for Heroku-style DATABASE_URLs
-database_url = os.environ.get("DATABASE_URL", "sqlite:///mediqa.db")
+database_url = DATABASE_URL
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 

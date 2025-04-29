@@ -1,7 +1,16 @@
 import os
 
-# Hardcoded Mistral API key
+# Hardcoded API keys and secrets
 MISTRAL_API_KEY = "j4h3leTe769ILXBLzwsMkrKEzWqZjOTj"
+SESSION_SECRET = "Kyb7NC2kQ4Qw9FoFd2TE0goQcXowJBgZf7ECFSjB6mVZuXBdiL2TpU7OgMG4BL8RR3sl0+GBraoHNwrS6kZhLw=="
+
+# Hardcoded database configuration
+DATABASE_URL = "postgresql://neondb_owner:npg_5qCGUsH4Jnkm@ep-sparkling-mouse-a5arych6.us-east-2.aws.neon.tech/neondb?sslmode=require"
+PGPORT = "5432"
+PGPASSWORD = "npg_5qCGUsH4Jnkm"
+PGUSER = "neondb_owner"
+PGDATABASE = "neondb"
+PGHOST = "ep-sparkling-mouse-a5arych6.us-east-2.aws.neon.tech"
 
 # Document configuration
 DOCUMENT_PATH = "attached_assets/pharmacy_guide.docx"
