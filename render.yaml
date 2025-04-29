@@ -21,3 +21,5 @@ databases:
     databaseName: mediqa
     user: mediqa_user
     plan: free
+
+# Note: Environment variables are also hardcoded in config.py
