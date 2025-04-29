@@ -52,35 +52,18 @@
     document.addEventListener('DOMContentLoaded', () => {
         console.log('Setting up landing page authentication buttons');
         
+        // Initialize buttons with new auth module
+        const auth = window.authModule;
+        if (!auth) {
+            console.error('Auth module not found');
+            return;
+        }
+        
         // Login button on the landing page
         const showLoginBtn = document.getElementById('show-login-btn');
         if (showLoginBtn) {
             showLoginBtn.addEventListener('click', () => {
-                console.log('Login button clicked');
-                const modal = document.getElementById('auth-modal');
-                if (modal) {
-                    // Show modal
-                    modal.style.display = 'block';
-                    
-                    // Set active tab to login
-                    const loginTab = document.querySelector('[data-tab="login"]');
-                    const loginForm = document.getElementById('login-form');
-                    
-                    if (loginTab && loginForm) {
-                        document.querySelectorAll('.auth-tab').forEach(tab => {
-                            tab.classList.remove('active');
-                        });
-                        loginTab.classList.add('active');
-                        
-                        document.querySelectorAll('.auth-form').forEach(form => {
-                            form.classList.remove('active');
-                        });
-                        loginForm.classList.add('active');
-                    }
-                    
-                    // Focus on email input
-                    document.getElementById('login-email').focus();
-                }
+                auth.showLoginModal();
             });
         }
         
@@ -88,48 +71,22 @@
         const showSignupBtn = document.getElementById('show-signup-btn');
         if (showSignupBtn) {
             showSignupBtn.addEventListener('click', () => {
-                console.log('Signup button clicked');
-                const modal = document.getElementById('auth-modal');
-                if (modal) {
-                    // Show modal
-                    modal.style.display = 'block';
-                    
-                    // Set active tab to signup
-                    const signupTab = document.querySelector('[data-tab="signup"]');
-                    const signupForm = document.getElementById('signup-form');
-                    
-                    if (signupTab && signupForm) {
-                        document.querySelectorAll('.auth-tab').forEach(tab => {
-                            tab.classList.remove('active');
-                        });
-                        signupTab.classList.add('active');
-                        
-                        document.querySelectorAll('.auth-form').forEach(form => {
-                            form.classList.remove('active');
-                        });
-                        signupForm.classList.add('active');
-                    }
-                    
-                    // Focus on username input
-                    document.getElementById('signup-username').focus();
-                }
+                auth.showSignupModal();
             });
         }
         
         // Check if user is already logged in
-        if (isLoggedIn()) {
+        if (auth.isLoggedIn()) {
             // Use the validateSession function which handles validation and cleanup
-            validateSession().then(isValid => {
+            auth.validateSession().then(isValid => {
                 if (isValid) {
                     // Only redirect if the session is valid
                     window.location.href = '/dashboard';
                 } else {
                     console.log('Session expired or invalid, user stays on landing page');
-                    // No need to clear localStorage, validateSession already does that
                 }
             }).catch(error => {
                 console.error('Session validation error:', error);
-                // validateSession already cleans up localStorage on errors
             });
         }
     });

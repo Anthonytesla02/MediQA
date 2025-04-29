@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import render_template, request, jsonify, session, redirect, url_for
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_required, current_user
 from app import app, db
 from models import (
     User, ChatHistory, Case, CaseAttempt, Challenge, 
@@ -25,8 +25,12 @@ from config import (
     CASE_COMPLETION_POINTS, CHALLENGE_COMPLETION_POINTS,
     CORRECT_DIAGNOSIS_BONUS, FLASHCARD_REVIEW_POINTS
 )
+from auth import auth_bp
 
 logger = logging.getLogger(__name__)
+
+# Register the authentication blueprint
+app.register_blueprint(auth_bp)
 
 # Initialize achievements
 with app.app_context():
@@ -572,143 +576,7 @@ def api_user_stats():
         logger.error(f"Error getting user stats: {e}")
         return jsonify({"error": "An error occurred getting user statistics"}), 500
 
-@app.route('/api/user/signup', methods=['POST'])
-def api_signup():
-    """API endpoint for user signup."""
-    try:
-        data = request.json
-        username = data.get('username', '')
-        email = data.get('email', '')
-        password = data.get('password', '')
-        
-        if not username or not email or not password:
-            return jsonify({"error": "Username, email, and password are required"}), 400
-        
-        # Check if user already exists
-        existing_user = User.query.filter(
-            (User.username == username) | (User.email == email)
-        ).first()
-        
-        if existing_user:
-            if existing_user.username == username:
-                return jsonify({"error": "Username already taken"}), 400
-            else:
-                return jsonify({"error": "Email already registered"}), 400
-        
-        # Create new user with password hashing
-        from werkzeug.security import generate_password_hash
-        
-        user = User(
-            username=username,
-            email=email,
-            password_hash=generate_password_hash(password),
-            points=0,
-            streak=0,
-            last_active=datetime.utcnow()
-        )
-        db.session.add(user)
-        db.session.commit()
-        
-        # Log the user in using Flask-Login
-        login_user(user)
-        
-        # Set user in session for backward compatibility
-        session['user_id'] = user.id
-        
-        return jsonify({
-            "success": True,
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "points": user.points,
-                "streak": user.streak
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error in user signup: {e}")
-        return jsonify({"error": "An error occurred during signup"}), 500
-
-@app.route('/api/user/login', methods=['POST'])
-def api_login():
-    """API endpoint for user login."""
-    try:
-        data = request.json
-        email = data.get('email', '')
-        password = data.get('password', '')
-        
-        if not email or not password:
-            return jsonify({"error": "Email and password are required"}), 400
-        
-        # Find user by email
-        user = User.query.filter_by(email=email).first()
-        
-        if not user:
-            return jsonify({"error": "Invalid email or password"}), 401
-        
-        # Check password
-        from werkzeug.security import check_password_hash
-        
-        if not check_password_hash(user.password_hash, password):
-            return jsonify({"error": "Invalid email or password"}), 401
-        
-        # Log the user in using Flask-Login
-        login_user(user)
-        
-        # Set user_id in session for backward compatibility with existing code
-        session['user_id'] = user.id
-        
-        # Update streak
-        update_user_streak(user.id)
-        
-        return jsonify({
-            "success": True,
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "points": user.points,
-                "streak": user.streak
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error in user login: {e}")
-        return jsonify({"error": "An error occurred during login"}), 500
-
-@app.route('/api/user/logout', methods=['POST'])
-def api_logout():
-    """API endpoint for user logout."""
-    try:
-        # Log the user out using Flask-Login
-        logout_user()
-        
-        # Clear user from session for backward compatibility
-        session.pop('user_id', None)
-        
-        return jsonify({"success": True})
-    except Exception as e:
-        logger.error(f"Error in user logout: {e}")
-        return jsonify({"error": "An error occurred during logout"}), 500
-        
-@app.route('/api/user/validate', methods=['GET'])
-def api_validate_session():
-    """API endpoint to validate if the user session is still active."""
-    try:
-        # Use Flask-Login to check if user is logged in
-        if not current_user.is_authenticated:
-            return jsonify({"valid": False, "error": "No active session"}), 401
-            
-        # Session is valid
-        return jsonify({
-            "valid": True,
-            "user": {
-                "id": current_user.id,
-                "username": current_user.username
-            }
-        })
-    except Exception as e:
-        logger.error(f"Error validating session: {e}")
-        return jsonify({"valid": False, "error": "Session validation error"}), 500
+# Authentication routes have been moved to auth.py blueprint
 
 @app.route('/api/search', methods=['POST'])
 def api_search():

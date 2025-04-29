@@ -16,12 +16,9 @@ class Base(DeclarativeBase):
 # Initialize SQLAlchemy
 db = SQLAlchemy(model_class=Base)
 
-# Initialize Flask-Login
-login_manager = LoginManager()
-
 # Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")
+app.secret_key = os.environ.get("SESSION_SECRET", "mediqa_dev_secret_key_2025")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the database
@@ -42,9 +39,12 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Initialize the database
 db.init_app(app)
 
-# Initialize login manager
+# Set up Flask-Login
+login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'index'  # Redirect to index page when login required
+login_manager.login_message = "Please log in to access this page."
+login_manager.login_message_category = "error"  # For styling the flash message
 
 @login_manager.user_loader
 def load_user(user_id):

@@ -12,10 +12,6 @@ const API_ENDPOINTS = {
   FLASHCARDS_DUE: '/api/flashcards/due',
   LEADERBOARD: '/api/leaderboard',
   USER_STATS: '/api/user/stats',
-  USER_SIGNUP: '/api/user/signup',
-  USER_LOGIN: '/api/user/login',
-  USER_LOGOUT: '/api/user/logout',
-  USER_VALIDATE: '/api/user/validate',
   SEARCH: '/api/search'
 };
 
@@ -60,191 +56,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // User Session Management
 function initUserSession() {
-  const user = localStorage.getItem('user');
   const userInfo = document.getElementById('user-info');
   
   if (userInfo) {
-    if (user) {
-      const userData = JSON.parse(user);
-      userInfo.innerHTML = `
-        <span>${userData.username}</span>
-        <span class="badge badge-primary">${userData.points} pts</span>
-        <span class="badge badge-secondary">🔥 ${userData.streak}</span>
-        <button id="logout-btn" class="btn btn-outline btn-sm">Logout</button>
-      `;
+    if (window.authModule && window.authModule.isLoggedIn()) {
+      // Get user data from localStorage
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return;
       
-      const logoutBtn = document.getElementById('logout-btn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
+      try {
+        const userData = JSON.parse(userStr);
+        
+        // Update user info in UI
+        userInfo.innerHTML = `
+          <span>${userData.username}</span>
+          <span class="badge badge-primary">${userData.points} pts</span>
+          <span class="badge badge-secondary">🔥 ${userData.streak}</span>
+          <button id="logout-btn" class="btn btn-outline btn-sm">Logout</button>
+        `;
+        
+        // Add event listener for logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', () => {
+            if (window.authModule) {
+              window.authModule.logout();
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+        localStorage.removeItem('user');
+        
+        // Show login button
+        showLoginButton();
       }
     } else {
-      userInfo.innerHTML = `
-        <button id="login-btn" class="btn btn-primary btn-sm">Login</button>
-      `;
-      
-      const loginBtn = document.getElementById('login-btn');
-      if (loginBtn) {
-        loginBtn.addEventListener('click', showLoginModal);
-      }
+      // User is not logged in, show login button
+      showLoginButton();
     }
   }
 }
 
-function showLoginModal() {
-  console.log('Showing login modal');
-  const modal = document.getElementById('auth-modal');
-  if (modal) {
-    modal.style.display = 'block';
+// Helper function to show login button in user info area
+function showLoginButton() {
+  const userInfo = document.getElementById('user-info');
+  if (userInfo) {
+    userInfo.innerHTML = `
+      <button id="header-login-btn" class="btn btn-primary btn-sm">Login</button>
+    `;
     
-    // Set active tab to login
-    const loginTab = document.querySelector('[data-tab="login"]');
-    const loginForm = document.getElementById('login-form');
-    
-    if (loginTab && loginForm) {
-      document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.classList.remove('active');
+    const loginBtn = document.getElementById('header-login-btn');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        if (window.authModule) {
+          window.authModule.showLoginModal();
+        }
       });
-      loginTab.classList.add('active');
-      
-      document.querySelectorAll('.auth-form').forEach(form => {
-        form.classList.remove('active');
-      });
-      loginForm.classList.add('active');
-    }
-    
-    // Focus on email input
-    document.getElementById('login-email').focus();
-  }
-}
-
-async function login(email, password) {
-  try {
-    console.log('Login attempt with:', { email });
-    
-    // Form validation
-    if (!email || !password) {
-      showToast('Error', 'Email and password are required', 'error');
-      return;
-    }
-    
-    // Call API
-    const response = await fetch(API_ENDPOINTS.USER_LOGIN, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    });
-    
-    const data = await response.json();
-    console.log('Login response:', data);
-    
-    if (data.success) {
-      localStorage.setItem('user', JSON.stringify(data.user));
-      showToast('Success', 'Logged in successfully!', 'success');
-      document.getElementById('auth-modal').style.display = 'none';
-      document.getElementById('nav-tabs').style.display = 'flex';
-      initUserSession();
-      
-      // If on landing page, redirect to dashboard
-      if (window.location.pathname === '/') {
-        window.location.href = '/dashboard';
-      }
-    } else {
-      showToast('Error', data.error || 'Login failed', 'error');
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-    showToast('Error', 'An error occurred during login', 'error');
-  }
-}
-
-async function signup(username, email, password) {
-  try {
-    console.log('Signup attempt with:', { username, email });
-    
-    // Form validation
-    if (!username || !email || !password) {
-      showToast('Error', 'All fields are required', 'error');
-      return;
-    }
-    
-    if (password.length < 6) {
-      showToast('Error', 'Password must be at least 6 characters', 'error');
-      return;
-    }
-    
-    // Call API
-    const response = await fetch(API_ENDPOINTS.USER_SIGNUP, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ username, email, password })
-    });
-    
-    const data = await response.json();
-    console.log('Signup response:', data);
-    
-    if (data.success) {
-      localStorage.setItem('user', JSON.stringify(data.user));
-      showToast('Success', 'Account created successfully!', 'success');
-      document.getElementById('auth-modal').style.display = 'none';
-      document.getElementById('nav-tabs').style.display = 'flex';
-      initUserSession();
-      
-      // If on landing page, redirect to dashboard
-      if (window.location.pathname === '/') {
-        window.location.href = '/dashboard';
-      }
-    } else {
-      showToast('Error', data.error || 'Signup failed', 'error');
-    }
-  } catch (error) {
-    console.error('Signup error:', error);
-    showToast('Error', 'An error occurred during signup', 'error');
-  }
-}
-
-async function logout() {
-  try {
-    const response = await fetch(API_ENDPOINTS.USER_LOGOUT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    const data = await response.json();
-    
-    // Always clear localStorage regardless of response
-    localStorage.removeItem('user');
-    
-    if (data.success) {
-      showToast('Success', 'Logged out successfully!', 'success');
-    } else {
-      // Even if the server call fails, we still want to log out the user locally
-      console.warn('Server-side logout had issues, but local session was cleared');
-    }
-    
-    // Update UI
-    initUserSession();
-    
-    // If on a restricted page, redirect to home
-    const restrictedPages = ['/dashboard', '/chat', '/simulation', '/flashcards'];
-    if (restrictedPages.includes(window.location.pathname)) {
-      window.location.href = '/';
-    }
-  } catch (error) {
-    console.error('Logout error:', error);
-    // Still remove the user from localStorage in case of error
-    localStorage.removeItem('user');
-    showToast('Warning', 'Logged out locally, but server error occurred', 'warning');
-    
-    // If on a restricted page, redirect to home
-    const restrictedPages = ['/dashboard', '/chat', '/simulation', '/flashcards'];
-    if (restrictedPages.includes(window.location.pathname)) {
-      window.location.href = '/';
     }
   }
 }
@@ -391,10 +259,23 @@ function getUserId() {
 
 // Function to validate user session with server
 async function validateSession() {
+  // Use the auth module if available
+  if (window.authModule && window.authModule.validateSession) {
+    return window.authModule.validateSession();
+  }
+  
+  // Fallback implementation if auth module is not available
   if (!isLoggedIn()) return false;
   
   try {
-    const response = await fetch(API_ENDPOINTS.USER_VALIDATE);
+    const response = await fetch('/api/user/validate', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'same-origin'
+    });
+    
     if (!response.ok) {
       // Clear invalid session data
       localStorage.removeItem('user');
